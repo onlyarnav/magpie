@@ -8,7 +8,7 @@ kind: feature
 mode: infra
 source: >
   README.md § Skill families (utilities) and AGENTS.md § Reusable skills.
-  Implemented by tools/skill-validator/, tools/skill-evals/,
+  Implemented by tools/skill-and-tool-validator/, tools/skill-evals/,
   tools/sandbox-lint/, tools/dashboard-generator/, tools/probe-templates/,
   and the write-skill / list-steward-skills utility skills.
 acceptance:
@@ -31,9 +31,9 @@ trustworthy as it grows.
 
 ## Where it lives
 
-- `tools/skill-validator/` — validates `SKILL.md` frontmatter (required
-  `name`, `description`, `license`), internal link integrity, and
-  placeholder conventions. CLI: `skill-validate`.
+- `tools/skill-and-tool-validator/` — validates `SKILL.md` frontmatter (required
+  `name`, `description`, `license`) and tool definitions, internal link integrity, and
+  placeholder conventions. CLI: `skill-and-tool-validate`.
 - `tools/skill-evals/` — harness for measuring skill behaviour.
 - `tools/sandbox-lint/` — lints the sandbox/permissions configuration.
 - `tools/dashboard-generator/` — read-only HTML dashboards over campaign
@@ -44,7 +44,7 @@ trustworthy as it grows.
   build iterations to mechanically select the next work item.
 - `tools/spec-validator/` — validates spec-loop spec frontmatter
   (required keys, valid `status`/`kind`/`mode` values, body-section
-  presence); the spec-side counterpart to `skill-validator`.
+  presence); the spec-side counterpart to `skill-and-tool-validator`.
 - Skills: `write-skill` (author/update a skill), `list-steward-skills`
   (live, generated index of every skill, grouped by family).
 
@@ -53,7 +53,7 @@ trustworthy as it grows.
 - **Generated, never cached.** `list-steward-skills` reads the live
   `.claude/skills/*/SKILL.md` frontmatter on every run, so the index never
   goes stale.
-- **Deterministic checks.** `skill-validator` and `sandbox-lint` are
+- **Deterministic checks.** `skill-and-tool-validator` and `sandbox-lint` are
   heuristic/text tools with no model calls — reproducible in CI.
 - **Hard vs soft rules.** The validator fails on missing frontmatter or
   broken links; advisories are warnings unless `--strict`.
@@ -66,15 +66,15 @@ trustworthy as it grows.
 
 ## Acceptance criteria
 
-1. `skill-validate` enforces required frontmatter + link integrity.
+1. `skill-and-tool-validate` enforces required frontmatter + link integrity.
 2. `list-steward-skills` generates its index from live frontmatter.
 3. Each meta tool ships with its own tests.
 
 ## Validation
 
 ```bash
-uv run --project tools/skill-validator --group dev pytest
-uv run --project tools/skill-validator --group dev skill-validate
+uv run --project tools/skill-and-tool-validator --group dev pytest
+uv run --project tools/skill-and-tool-validator --group dev skill-and-tool-validate
 ```
 
 ## Known gaps
