@@ -11,6 +11,7 @@
     - [Standalone labels](#standalone-labels)
   - [Capability to skill map](#capability-to-skill-map)
   - [Capability to tool map](#capability-to-tool-map)
+  - [MCP servers, classified by capability](#mcp-servers-classified-by-capability)
   - [The rule](#the-rule)
     - [A GitHub issue](#a-github-issue)
     - [A pull request](#a-pull-request)
@@ -219,15 +220,17 @@ Capabilities for every skill currently in
 
 ## Capability to tool map
 
-Tools under [`tools/`](../tools/). Tools with two values (separated by
-`+`) carry both labels — the dual role is explained in each row.
+Tools under [`tools/`](../tools/). A tool's capability is the interface
+it provides; a tool may carry more than one value (separated by `+`) when
+it implements multiple contracts (e.g. `tools/gmail` provides both
+`mail-source` and `mail-draft`).
 
 | Tool | Capability / capabilities | Role |
 |---|---|---|
 | [`tools/agent-guard`](../tools/agent-guard/) | `substrate:action-guard` | Deterministic `PreToolUse` guard dispatcher: blocks `gh`/`git` commands that would ping maintainers, carry a `Co-Authored-By` trailer, mark-ready prematurely, leak security language publicly, or empty a PR via force-push. Extensible — skills contribute guards via `guards.d` |
 | [`tools/agent-isolation`](../tools/agent-isolation/) | `substrate:sandbox` | Secure-agent sandbox helpers |
 | [`tools/apache-projects`](../tools/apache-projects/) | `contract:project-metadata` | ASF project-metadata substrate (`apache/comdev` `apache-projects-mcp`); read-only `projects.apache.org/json` rosters / people / releases. Backs `contributor-nomination` and the security roster-resolution paths; tracked at `main`, not pinned |
-| [`tools/cve-org`](../tools/cve-org/) | `contract:cve-authority` | Publishes to CVE.org *(resolve)* and records the resulting CVE state back into the tracker *(intake)* |
+| [`tools/cve-org`](../tools/cve-org/) | `contract:cve-authority` | CVE.org services adapter: publishes records to CVE.org and reads back the resulting CVE state. Implements the `tools/cve-tool/` contract for the CVE.org-direct backend |
 | [`tools/cve-tool`](../tools/cve-tool/) | `contract:cve-authority` | Adapter contract for CNA backends (Vulnogram, MITRE form, CVE.org direct, GHSA). Pure interface spec; no executable code — adapters under sibling `tools/cve-tool-*/` directories implement it. |
 | [`tools/cve-tool-vulnogram`](../tools/cve-tool-vulnogram/) | `contract:cve-authority` | ASF Vulnogram CVE-allocation adapter. Implements the `tools/cve-tool/` contract. Previously named `tools/vulnogram/`. |
 | [`tools/dashboard-generator`](../tools/dashboard-generator/) | `substrate:analytics` | Self-contained HTML dashboard generator |
@@ -237,11 +240,11 @@ Tools under [`tools/`](../tools/). Tools with two values (separated by
 | [`tools/github`](../tools/github/) | `contract:tracker` | GitHub REST / GraphQL substrate (called by every lifecycle phase — pure substrate, no single phase) |
 | [`tools/github-body-field`](../tools/github-body-field/) | `contract:tracker` | Read or rewrite one `### Field` section of a GitHub issue body without bringing the body into agent context — substrate helper for the security-sync skills |
 | [`tools/github-rollup`](../tools/github-rollup/) | `contract:tracker` | Append to (or create) the status-rollup comment on a GitHub issue without bringing the rollup body into agent context — substrate helper for every status-update-emitting skill |
-| [`tools/gmail`](../tools/gmail/) | `contract:mail-draft` | Gmail API substrate |
+| [`tools/gmail`](../tools/gmail/) | `contract:mail-source` + `contract:mail-draft` | Gmail API substrate — inbound report intake (`mail-source`) plus outbound courtesy-reply drafting (`mail-draft`); read + draft only, never sends |
 | [`tools/jira`](../tools/jira/) | `contract:tracker` | JIRA REST substrate (read-only today; write subcommands tracked in [#301](https://github.com/apache/magpie/issues/301)) |
 | [`tools/mail-archive`](../tools/mail-archive/) | `contract:mail-archive` | Adapter contract for public mail-archive backends (PonyMail, Hyperkitty, Discourse, Google Groups, GitHub Discussions). Pure interface spec. |
-| [`tools/mail-source`](../tools/mail-source/) | `contract:mail-source` | Mail-source backend abstraction (mbox / IMAP / Mailman 3); the abstraction is setup, every concrete read is part of the intake pipeline |
-| [`tools/ponymail`](../tools/ponymail/) | `contract:mail-archive` | PonyMail archive substrate; same dual role as `mail-source` — substrate plus an intake-pipeline component |
+| [`tools/mail-source`](../tools/mail-source/) | `contract:mail-source` | Mail-source backend abstraction (mbox / IMAP / Mailman 3) feeding a uniform inbound thread/message view to the intake pipeline |
+| [`tools/ponymail`](../tools/ponymail/) | `contract:mail-archive` | PonyMail public mail-archive substrate (ASF `lists.apache.org`); implements the `tools/mail-archive/` contract |
 | [`tools/scan-format`](../tools/scan-format/) | `contract:scan-format` | Adapter contract for security-scanner report formats (ASVS reference); reads a scan's finding index + per-finding evidence for the `security-issue-import-from-scan` pipeline. |
 | [`tools/permission-audit`](../tools/permission-audit/) | `substrate:sandbox` | Audit + atomically edit Claude Code `permissions.allow[]` entries; backs `/magpie-setup verify --apply-permission-audit` (check 8d) |
 | [`tools/pr-management-stats`](../tools/pr-management-stats/) | `substrate:analytics` | PR-backlog analytics engine |
@@ -251,7 +254,7 @@ Tools under [`tools/`](../tools/). Tools with two values (separated by
 | [`tools/sandbox-lint`](../tools/sandbox-lint/) | `substrate:sandbox` | Sandbox settings linter |
 | [`tools/security-tracker-stats-dashboard`](../tools/security-tracker-stats-dashboard/) | `substrate:analytics` | Security-tracker analytics engine |
 | [`tools/spec-loop`](../tools/spec-loop/) | `substrate:framework-dev` | Spec-driven build loop runner (Ralph-style) for framework development |
-| [`tools/skill-evals`](../tools/skill-evals/) | `substrate:framework-dev` | Eval harness for skills; the harness is setup infrastructure, the run output is governance evidence |
+| [`tools/skill-evals`](../tools/skill-evals/) | `substrate:framework-dev` | Eval harness for skills; framework-dev infrastructure whose run output is governance evidence |
 | [`tools/skill-and-tool-validator`](../tools/skill-and-tool-validator/) | `substrate:framework-dev` | Skill-frontmatter and convention validator |
 | [`tools/spec-status-index`](../tools/spec-status-index/) | `substrate:framework-dev` | Index of spec / RFC implementation status — substrate that also doubles as a governance/stats view |
 | [`tools/spec-validator`](../tools/spec-validator/) | `substrate:framework-dev` | Spec-frontmatter and body-section validator — counterpart to `skill-and-tool-validator` for `tools/spec-loop/specs/` |
@@ -263,7 +266,29 @@ happen to consume it (RFC-AI-0005). `tools/github` provides the
 `contract:cve-authority`; `tools/privacy-llm` is `substrate:privacy`.
 Use a `contract:<name>` value when the tool implements a capability
 contract under `tools/<contract>/`, and a `substrate:<name>` value for
-framework substrate. A tool may carry more than one (rare).
+framework substrate. A tool may carry more than one (rare —
+`tools/gmail` is the only one today).
+
+## MCP servers, classified by capability
+
+Several tools wrap a [Model Context Protocol](https://modelcontextprotocol.io)
+(MCP) server as their concrete backend. An MCP server is **not** a
+separate axis — it is classified by the capability its *wrapping tool*
+provides; the MCP is just the transport, interchangeable with a CLI or
+REST backend behind the same contract. A skill never names an MCP
+server — it targets the capability, and the tool routes to whichever
+backend the adopter wired in. The framework consumes four:
+
+| MCP server | Tool prefix | Wrapped by | Capability provided | Organization |
+|---|---|---|---|---|
+| GitHub MCP | `mcp__github__*` | [`tools/github`](../tools/github/) | `contract:tracker` | — |
+| Gmail MCP (claude.ai) | `mcp__claude_ai_Gmail__*` | [`tools/gmail`](../tools/gmail/) | `contract:mail-source` + `contract:mail-draft` | — |
+| PonyMail MCP (`apache/comdev`) | `mcp__ponymail__*` | [`tools/ponymail`](../tools/ponymail/) | `contract:mail-archive` | ASF |
+| apache-projects MCP (`apache/comdev`) | `mcp__apache-projects__*` | [`tools/apache-projects`](../tools/apache-projects/) | `contract:project-metadata` | ASF |
+
+Non-MCP backends fulfil the same contracts: JIRA is reached over REST
+and `gh` is the CLI fallback, both `contract:tracker`. See
+[`docs/prerequisites.md`](prerequisites.md) for connection setup.
 
 ---
 
@@ -337,5 +362,5 @@ in security (`area:security` + `capability:triage`) become trivially
 findable as a cohort even though they live in different families.
 
 Capability is also a forcing function for skill design: if a new skill
-doesn't fit any of the nine buckets cleanly, that's a signal worth
-inspecting before the skill ships.
+doesn't fit any of the ten skill-capability buckets cleanly, that's a
+signal worth inspecting before the skill ships.
