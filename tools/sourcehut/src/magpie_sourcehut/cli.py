@@ -190,4 +190,3 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (SourceHutError, json.JSONDecodeError) as e:
         print(f"magpie-sourcehut error: {e}", file=sys.stderr)
         return 2
-

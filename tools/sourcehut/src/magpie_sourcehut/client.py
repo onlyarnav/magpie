@@ -84,7 +84,7 @@ def query_graphql(service: str, query: str, variables: dict[str, Any] | None = N
             pass
 
         if err_msg:
-            raise SourceHutError(err_msg)
+            raise SourceHutError(err_msg) from exc
         raise SourceHutError(f"HTTP request to {url} failed with status {exc.code}") from exc
     except urllib.error.URLError as exc:
         raise SourceHutError(f"Failed to connect to {url}: {exc.reason}") from exc

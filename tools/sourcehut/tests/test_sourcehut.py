@@ -236,4 +236,3 @@ def test_cli_label_error(capsys: pytest.CaptureFixture[str]) -> None:
     assert excinfo.value.code == 2
     captured = capsys.readouterr()
     assert "At least one of --add or --remove must be specified" in captured.err
-

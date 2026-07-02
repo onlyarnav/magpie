@@ -248,8 +248,6 @@ def test_hg_reset_worktree(hg_repo: Path) -> None:
     assert (hg_repo / "ignored.txt").exists()  # ignored files should be preserved
 
 
-
-
 def test_registry_unique_names() -> None:
     names = [b.name for b in BACKENDS]
     assert names == sorted(set(names), key=names.index)
