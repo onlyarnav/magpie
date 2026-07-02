@@ -235,6 +235,9 @@ def test_hg_cached_diff_raises(hg_repo: Path) -> None:
 def test_hg_reset_worktree(hg_repo: Path) -> None:
     backend = MercurialBackend(hg_repo)
     (hg_repo / ".hgignore").write_text("ignored.txt\n")
+    backend.stage([".hgignore"])
+    backend.commit("add hgignore")
+
     (hg_repo / "file.txt").write_text("dirty\n")
     (hg_repo / "untracked.txt").write_text("junk\n")
     (hg_repo / "ignored.txt").write_text("ignored\n")
@@ -243,6 +246,7 @@ def test_hg_reset_worktree(hg_repo: Path) -> None:
     assert not (hg_repo / "untracked.txt").exists()
     assert (hg_repo / "file.txt").read_text() == "hello\n"
     assert (hg_repo / "ignored.txt").exists()  # ignored files should be preserved
+
 
 
 
