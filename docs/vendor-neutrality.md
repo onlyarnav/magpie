@@ -205,7 +205,7 @@ contract for one vendor:
 | [`tools/mail-source`](../tools/mail-source/) | mbox, IMAP, Gmail API ([`tools/gmail`](../tools/gmail/)) | Mailman 3 |
 | [`tools/forwarder-relay`](../tools/forwarder-relay/) | ASF-security ([`tools/gmail/asf-relay.md`](../tools/gmail/asf-relay.md)) | huntr.com, HackerOne |
 | [`tools/scan-format`](../tools/scan-format/) | ASVS | other scanner formats |
-| [`tools/vcs`](../tools/vcs/) | Git | Mercurial, Subversion, … |
+| [`tools/vcs`](../tools/vcs/) | Git, Mercurial | Subversion, … |
 
 A project selects an adapter per capability in its config
 (`cve_authority.tool: vulnogram`, `archive_system.kind: ponymail`,
@@ -536,9 +536,9 @@ implementation of a capability.
 
 | Capability contract | Neutral? | Class | Backends today | Basis |
 |---|---|---|---|---|
-| `contract:tracker` | ✅ | vendor-backed | Atlassian, GitHub | 2 backend vendors: Atlassian, GitHub |
-| `contract:source-control` | ✅ | vendor-backed | Git, GitHub, Subversion | 3 backend vendors: Git, GitHub, Subversion |
-| `contract:mail-archive` | ✅ | vendor-backed | Google, PonyMail | 2 backend vendors: Google, PonyMail |
+| `contract:tracker` | ✅ | vendor-backed | Atlassian, GitHub, SourceHut | 3 backend vendors: Atlassian, GitHub, SourceHut |
+| `contract:source-control` | ✅ | vendor-backed | Git, GitHub, SourceHut, Subversion | 4 backend vendors: Git, GitHub, SourceHut, Subversion |
+| `contract:mail-archive` | ✅ | vendor-backed | Google, PonyMail, SourceHut | 3 backend vendors: Google, PonyMail, SourceHut |
 | `contract:mail-source` | ✅ | vendor-backed | Google, PonyMail | 2 backend vendors: Google, PonyMail |
 | `contract:mail-draft` | ❌ | vendor-backed | Google | only 1 backend vendor (Google); needs 1 more |
 | `contract:cve-authority` | ✅ | vendor-backed | CVE.org, Vulnogram | 2 backend vendors: CVE.org, Vulnogram |

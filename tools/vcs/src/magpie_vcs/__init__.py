@@ -20,8 +20,8 @@
 This module extracts the abstraction documented in
 ``tools/github/source-control.md`` into runnable code: one abstract
 :class:`VCSBackend` interface listing the operations the dev-loop skills
-need, a complete :class:`GitBackend`, and explicit extension points for the
-non-Git VCS bridges (Mercurial #601, Subversion #602, Jujutsu #603,
+need, a complete :class:`GitBackend`, a complete :class:`MercurialBackend`, and explicit extension points for the
+non-Git/non-Hg VCS bridges (Subversion #602, Jujutsu #603,
 Fossil #604, Perforce #605).
 
 A skill calls the abstract operation (``magpie-vcs diff``) instead of a raw
@@ -390,7 +390,7 @@ class MercurialBackend(VCSBackend):
         if base:
             args.extend(["-r", base])
         if paths:
-            args.extend(paths)
+            args.extend(["--", *paths])
         return _run(args, self.root)
 
     def log(
@@ -411,7 +411,7 @@ class MercurialBackend(VCSBackend):
         if since:
             args.extend(["-d", f">= {since}"])
         if paths:
-            args.extend(paths)
+            args.extend(["--", *paths])
         return _run(args, self.root)
 
     def create_branch(self, name: str) -> None:

@@ -71,17 +71,20 @@ def query_graphql(service: str, query: str, variables: dict[str, Any] | None = N
                 raise SourceHutError(f"GraphQL error from {service}.sr.ht: {'; '.join(err_msgs)}")
             return res_json.get("data", {})
     except urllib.error.HTTPError as exc:
+        err_msg = None
         try:
             err_body = exc.read().decode("utf-8")
             err_json = json.loads(err_body)
             err_errors = err_json.get("errors")
             if err_errors:
                 err_msgs = [e.get("message", "Unknown error") for e in err_errors]
-                raise SourceHutError(f"HTTP {exc.code}: {'; '.join(err_msgs)}")
+                err_msg = f"HTTP {exc.code}: {'; '.join(err_msgs)}"
         except Exception:
             # Ignore errors parsing the HTTP error response body as JSON
             pass
 
+        if err_msg:
+            raise SourceHutError(err_msg)
         raise SourceHutError(f"HTTP request to {url} failed with status {exc.code}") from exc
     except urllib.error.URLError as exc:
         raise SourceHutError(f"Failed to connect to {url}: {exc.reason}") from exc

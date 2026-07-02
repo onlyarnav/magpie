@@ -100,7 +100,7 @@ def list_patchsets(owner: str, list_name: str) -> list[dict[str, Any]]:
     mlist = res.get("list") or {}
     patches_conn = mlist.get("patches") or {}
     edges = patches_conn.get("edges") or []
-    return [edge.get("node") for edge in edges if edge.get("node")]
+    return [edge.get("node") for edge in edges if edge and edge.get("node")]
 
 
 def map_patchset_to_pr(patchset: dict[str, Any]) -> dict[str, Any]:
@@ -119,7 +119,7 @@ def map_patchset_to_pr(patchset: dict[str, Any]) -> dict[str, Any]:
     thread = patchset.get("thread") or {}
     emails_conn = thread.get("emails") or {}
     edges = emails_conn.get("edges") or []
-    emails = [edge.get("node") for edge in edges if edge.get("node")]
+    emails = [edge.get("node") for edge in edges if edge and edge.get("node")]
 
     # Sort emails by date if possible
     with contextlib.suppress(Exception):
@@ -145,13 +145,14 @@ def map_patchset_to_pr(patchset: dict[str, Any]) -> dict[str, Any]:
     # Map patches inside the patchset to commits
     commits = []
     for patch in patchset.get("patches") or []:
-        commits.append(
-            {
-                "id": str(patch.get("id")),
-                "subject": patch.get("subject", ""),
-                "diff": patch.get("diff", ""),
-            }
-        )
+        if patch:
+            commits.append(
+                {
+                    "id": str(patch.get("id")),
+                    "subject": patch.get("subject", ""),
+                    "diff": patch.get("diff", ""),
+                }
+            )
 
     # Map replies (all emails except the first/cover letter) to review comments
     comments = []
