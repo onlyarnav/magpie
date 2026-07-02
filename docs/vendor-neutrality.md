@@ -421,7 +421,6 @@ extension points are public and labelled, not hypothetical. (The
 Bitbucket and SourceHut forges, which carry their own VCS, are tracked
 under the forge axis above.)
 
-
 ### 6. Project governance
 
 Vendor neutrality extends to *how a project is run*, not just to its
