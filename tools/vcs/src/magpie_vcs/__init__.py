@@ -445,7 +445,6 @@ class MercurialBackend(VCSBackend):
         _run(["hg", "purge", "--config", "extensions.purge="], self.root, check=False, capture=False)
 
 
-
 class SubversionBackend(_UnimplementedBackend):
     """Apache Subversion (SVN) extension point — see apache/magpie#602."""
 
