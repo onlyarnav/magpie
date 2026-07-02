@@ -228,3 +228,12 @@ def test_cli_dispatch(mock_urlopen: MagicMock, mock_env: None, capsys: pytest.Ca
     assert code == 0
     captured = capsys.readouterr()
     assert "FAILED" in captured.out
+
+
+def test_cli_label_error(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        main(["ticket", "label", "~user", "my-project", "42"])
+    assert excinfo.value.code == 2
+    captured = capsys.readouterr()
+    assert "At least one of --add or --remove must be specified" in captured.err
+
