@@ -16,7 +16,6 @@
 **Kind:** implementation
 **Vendor:** SourceHut
 
-
 SourceHut (sr.ht) forge bridge implementation for the Apache Magpie framework. It integrates ticket tracking (`todo.sr.ht`), mailing list patchset review (`lists.sr.ht`), CI builds (`builds.sr.ht`), and repository reads (`git.sr.ht` & `hg.sr.ht`) using SourceHut's GraphQL APIs.
 
 ## Prerequisites
