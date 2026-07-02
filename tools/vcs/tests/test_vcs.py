@@ -231,6 +231,21 @@ def test_hg_cached_diff_raises(hg_repo: Path) -> None:
         backend.diff(cached=True)
 
 
+@hg_required
+def test_hg_reset_worktree(hg_repo: Path) -> None:
+    backend = MercurialBackend(hg_repo)
+    (hg_repo / ".hgignore").write_text("ignored.txt\n")
+    (hg_repo / "file.txt").write_text("dirty\n")
+    (hg_repo / "untracked.txt").write_text("junk\n")
+    (hg_repo / "ignored.txt").write_text("ignored\n")
+    backend.reset_worktree()
+    assert backend.is_clean()
+    assert not (hg_repo / "untracked.txt").exists()
+    assert (hg_repo / "file.txt").read_text() == "hello\n"
+    assert (hg_repo / "ignored.txt").exists()  # ignored files should be preserved
+
+
+
 def test_registry_unique_names() -> None:
     names = [b.name for b in BACKENDS]
     assert names == sorted(set(names), key=names.index)
