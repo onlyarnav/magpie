@@ -21,10 +21,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections.abc import Sequence
 
 from magpie_sourcehut.builds import get_job
-from magpie_sourcehut.client import query_graphql
+from magpie_sourcehut.client import SourceHutError, query_graphql
 from magpie_sourcehut.lists import get_patchset, list_patchsets, map_patchset_to_pr
 from magpie_sourcehut.repo import get_repo
 from magpie_sourcehut.todo import (
@@ -131,58 +132,62 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     ns = parser.parse_args(argv)
 
-    if ns.subcommand == "graphql":
-        vars_dict = None
-        if ns.variables:
-            vars_dict = json.loads(ns.variables)
-        res = query_graphql(ns.service, ns.query, vars_dict)
-        _print_json(res)
-
-    elif ns.subcommand == "ticket":
-        if ns.action == "get":
-            res = get_ticket(ns.owner, ns.name, ns.id)
-            _print_json(res)
-        elif ns.action == "create":
-            res = submit_ticket(ns.owner, ns.name, ns.title, ns.body)
-            _print_json(res)
-        elif ns.action == "comment":
-            res = submit_comment(ns.owner, ns.name, ns.id, ns.body)
-            _print_json(res)
-        elif ns.action == "label":
-            if not ns.add and not ns.remove:
-                parser.error("At least one of --add or --remove must be specified")
-            if ns.add:
-                label_ticket(ns.owner, ns.name, ns.id, ns.add)
-            if ns.remove:
-                unlabel_ticket(ns.owner, ns.name, ns.id, ns.remove)
-            # Fetch and print updated ticket details
-            res = get_ticket(ns.owner, ns.name, ns.id)
+    try:
+        if ns.subcommand == "graphql":
+            vars_dict = None
+            if ns.variables:
+                vars_dict = json.loads(ns.variables)
+            res = query_graphql(ns.service, ns.query, vars_dict)
             _print_json(res)
 
-        elif ns.action == "close":
-            res = update_ticket_status(ns.owner, ns.name, ns.id, ns.status, ns.resolution)
-            _print_json(res)
+        elif ns.subcommand == "ticket":
+            if ns.action == "get":
+                res = get_ticket(ns.owner, ns.name, ns.id)
+                _print_json(res)
+            elif ns.action == "create":
+                res = submit_ticket(ns.owner, ns.name, ns.title, ns.body)
+                _print_json(res)
+            elif ns.action == "comment":
+                res = submit_comment(ns.owner, ns.name, ns.id, ns.body)
+                _print_json(res)
+            elif ns.action == "label":
+                if not ns.add and not ns.remove:
+                    parser.error("At least one of --add or --remove must be specified")
+                if ns.add:
+                    label_ticket(ns.owner, ns.name, ns.id, ns.add)
+                if ns.remove:
+                    unlabel_ticket(ns.owner, ns.name, ns.id, ns.remove)
+                # Fetch and print updated ticket details
+                res = get_ticket(ns.owner, ns.name, ns.id)
+                _print_json(res)
+            elif ns.action == "close":
+                res = update_ticket_status(ns.owner, ns.name, ns.id, ns.status, ns.resolution)
+                _print_json(res)
 
-    elif ns.subcommand == "patchset":
-        if ns.action == "get":
-            res = get_patchset(ns.owner, ns.list_name, ns.id)
-            _print_json(res)
-        elif ns.action == "list":
-            patchsets = list_patchsets(ns.owner, ns.list_name)
-            _print_json(patchsets)
-        elif ns.action == "pr-map":
-            raw = get_patchset(ns.owner, ns.list_name, ns.id)
-            res = map_patchset_to_pr(raw)
-            _print_json(res)
+        elif ns.subcommand == "patchset":
+            if ns.action == "get":
+                res = get_patchset(ns.owner, ns.list_name, ns.id)
+                _print_json(res)
+            elif ns.action == "list":
+                patchsets = list_patchsets(ns.owner, ns.list_name)
+                _print_json(patchsets)
+            elif ns.action == "pr-map":
+                raw = get_patchset(ns.owner, ns.list_name, ns.id)
+                res = map_patchset_to_pr(raw)
+                _print_json(res)
 
-    elif ns.subcommand == "build":
-        if ns.action == "get":
-            res = get_job(ns.id)
-            _print_json(res)
+        elif ns.subcommand == "build":
+            if ns.action == "get":
+                res = get_job(ns.id)
+                _print_json(res)
 
-    elif ns.subcommand == "repo":
-        if ns.action == "get":
-            res = get_repo(ns.service, ns.owner, ns.name)
-            _print_json(res)
+        elif ns.subcommand == "repo":
+            if ns.action == "get":
+                res = get_repo(ns.service, ns.owner, ns.name)
+                _print_json(res)
 
-    return 0
+        return 0
+    except (SourceHutError, json.JSONDecodeError) as e:
+        print(f"magpie-sourcehut error: {e}", file=sys.stderr)
+        return 2
+
