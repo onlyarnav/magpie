@@ -25,7 +25,7 @@ SourceHut (sr.ht) forge bridge implementation for the Apache Magpie framework. I
 
 ## Features
 
-1. **VCS Repositories:** Reads repo metadata and refs across `git.sr.ht` and `hg.sr.ht`.
+1. **VCS Repositories:** Reads repo metadata across `git.sr.ht` and `hg.sr.ht`.
 2. **Issue Tracker:** Read/write operations (create ticket, comment, resolve status, update labels) on `todo.sr.ht` trackers.
 3. **Mailing Lists:** Reads patchsets and threads from `lists.sr.ht`, mapping them to the uniform PR/MR review abstraction.
 4. **CI Builds:** Reads job statuses from `builds.sr.ht`.
