@@ -415,6 +415,8 @@ class MercurialBackend(VCSBackend):
         return _run(args, self.root)
 
     def create_branch(self, name: str) -> None:
+        # Creates and automatically activates the bookmark on the current revision,
+        # switching the working directory to this bookmark for subsequent commits.
         _run(["hg", "bookmark", name], self.root, capture=False)
 
     def switch(self, ref: str) -> None:
@@ -440,7 +442,8 @@ class MercurialBackend(VCSBackend):
 
     def reset_worktree(self) -> None:
         _run(["hg", "update", "--clean"], self.root, check=False, capture=False)
-        _run(["hg", "purge", "--all", "--config", "extensions.purge="], self.root, check=False, capture=False)
+        _run(["hg", "purge", "--config", "extensions.purge="], self.root, check=False, capture=False)
+
 
 
 class SubversionBackend(_UnimplementedBackend):

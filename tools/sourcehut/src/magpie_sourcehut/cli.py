@@ -149,6 +149,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             res = submit_comment(ns.owner, ns.name, ns.id, ns.body)
             _print_json(res)
         elif ns.action == "label":
+            if not ns.add and not ns.remove:
+                parser.error("At least one of --add or --remove must be specified")
             if ns.add:
                 label_ticket(ns.owner, ns.name, ns.id, ns.add)
             if ns.remove:
@@ -156,6 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             # Fetch and print updated ticket details
             res = get_ticket(ns.owner, ns.name, ns.id)
             _print_json(res)
+
         elif ns.action == "close":
             res = update_ticket_status(ns.owner, ns.name, ns.id, ns.status, ns.resolution)
             _print_json(res)
