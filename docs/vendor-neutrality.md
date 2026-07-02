@@ -414,13 +414,13 @@ non-Git/non-Hg systems:
 [Subversion](https://github.com/apache/magpie/issues/602) (generic VCS
 binding; `tools/asf-svn` covers the full ASF SVN surface including
 `dist.apache.org` and authorization),
-
 [Jujutsu](https://github.com/apache/magpie/issues/603),
 [Fossil](https://github.com/apache/magpie/issues/604), and
 [Perforce](https://github.com/apache/magpie/issues/605) — so the
 extension points are public and labelled, not hypothetical. (The
 Bitbucket and SourceHut forges, which carry their own VCS, are tracked
 under the forge axis above.)
+
 
 ### 6. Project governance
 
@@ -486,7 +486,6 @@ coverage without pretending one team can implement an open-ended set.
 | Forge / tracker | ✅ by construction | GitHub, Jira, SourceHut; CVE/scan/relay via adapter contracts | GitLab [#305](https://github.com/apache/magpie/issues/305), Forgejo/Gitea [#310](https://github.com/apache/magpie/issues/310), Pagure [#312](https://github.com/apache/magpie/issues/312), Bitbucket [#606](https://github.com/apache/magpie/issues/606), Bugzilla [#302](https://github.com/apache/magpie/issues/302) |
 | Communication channels | ✅ by construction | PonyMail / mail-archive reads | mbox [#304](https://github.com/apache/magpie/issues/304), IMAP [#303](https://github.com/apache/magpie/issues/303), Mailman 3 [#306](https://github.com/apache/magpie/issues/306); Discourse [#307](https://github.com/apache/magpie/issues/307), Zulip [#308](https://github.com/apache/magpie/issues/308), Matrix [#309](https://github.com/apache/magpie/issues/309) |
 | Source control (VCS) | ✅ by construction | **Git (complete)**, **Mercurial (complete)**; ASF SVN surface ([`tools/asf-svn`](../tools/asf-svn/): source control + dist.apache.org + authorization) | Subversion generic VCS binding [\#602](https://github.com/apache/magpie/issues/602) (detected); Jujutsu [\#603](https://github.com/apache/magpie/issues/603), Fossil [\#604](https://github.com/apache/magpie/issues/604), Perforce [\#605](https://github.com/apache/magpie/issues/605) (tracked) |
-
 | Project governance | ✅ by construction | ASF + non-ASF adopter profiles | Adopter config (modes, thresholds) |
 
 ✅ "by construction" means the workflows carry no vendor assumption;
