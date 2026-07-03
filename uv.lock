@@ -21,7 +21,7 @@ members = [
     "github-body-field",
     "github-rollup",
     "jira-bridge",
-    "magpie-maildir",
+    "magpie-fossil",
     "magpie-sourcehut",
     "magpie-vcs",
     "oauth-draft",
@@ -630,25 +630,9 @@ wheels = [
 ]
 
 [[package]]
-name = "magpie-maildir"
+name = "magpie-fossil"
 version = "0.1.0"
-source = { editable = "tools/maildir" }
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=2.1.0" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.15.18" },
-]
+source = { editable = "tools/fossil" }
 
 [[package]]
 name = "magpie-sourcehut"
