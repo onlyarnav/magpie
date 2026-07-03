@@ -381,6 +381,11 @@ class MercurialBackend(VCSBackend):
         return _run(["hg", "status"], self.root)
 
     def current_branch(self) -> str:
+        # Prefer the active bookmark (analogous to Git branches in our usage)
+        # and fall back to the named branch if no bookmark is active.
+        active = _run(["hg", "log", "-r", ".", "-T", "{activebookmark}"], self.root).strip()
+        if active:
+            return active
         return _run(["hg", "branch"], self.root).strip()
 
     def diff(self, base: str | None = None, cached: bool = False, paths: Sequence[str] = ()) -> str:

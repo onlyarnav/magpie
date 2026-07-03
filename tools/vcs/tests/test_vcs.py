@@ -59,6 +59,7 @@ def git_repo(tmp_path: Path) -> Path:
     _git(repo, "init", "-q", "-b", "main")
     _git(repo, "config", "user.email", "t@example.com")
     _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "commit.gpgsign", "false")
     (repo / "file.txt").write_text("hello\n")
     _git(repo, "add", "file.txt")
     _git(repo, "commit", "-q", "-m", "initial commit")
@@ -216,6 +217,7 @@ def test_hg_bookmark_and_commit(hg_repo: Path) -> None:
     backend = MercurialBackend(hg_repo)
     assert backend.current_branch() == "default"
     backend.create_branch("fix-bookmark")
+    assert backend.current_branch() == "fix-bookmark"
     (hg_repo / "new.txt").write_text("x\n")
     backend.stage(["new.txt"])
     assert "new.txt" in backend.diff()
