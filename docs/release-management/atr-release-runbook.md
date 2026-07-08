@@ -277,13 +277,17 @@ key and perform the registration
 2. **Create the draft release and upload** to ATR (Compose):
 
    ```bash
-   # Create a draft candidate for magpie <version> and upload the
-   # artefact + signature + checksum. Confirm exact subcommands with
-   # `atr --help`; these map to POST /api/release/create and
-   # POST /api/release/upload.
-   atr release create magpie "${VERSION}" --rc "${RC}"
-   atr release upload  magpie "${VERSION}" \
-     "${ARTIFACT}" "${ARTIFACT}.asc" "${ARTIFACT}.sha512"
+   # Start a draft release for magpie <version>, then upload the artefact
+   # + signature + checksum. ATR tracks *revisions*, not rc-numbers: each
+   # upload adds to the current revision (the rcN identity lives in the tag
+   # and the [VOTE] subject, not in the ATR release name). `atr upload` takes
+   # PROJECT VERSION PATH FILEPATH — PATH is the file's name inside the
+   # release, FILEPATH the local file — so upload one file per call.
+   # (Verbs per the client's COMMANDS.md; run `atr <cmd> --help` for flags.)
+   atr release start magpie "${VERSION}"
+   atr upload magpie "${VERSION}" "${ARTIFACT}"        "${ARTIFACT}"
+   atr upload magpie "${VERSION}" "${ARTIFACT}.asc"    "${ARTIFACT}.asc"
+   atr upload magpie "${VERSION}" "${ARTIFACT}.sha512" "${ARTIFACT}.sha512"
    ```
 
 3. **Let the checks run.** On upload, ATR fires asynchronous checks:
@@ -292,7 +296,11 @@ key and perform the registration
    Poll them:
 
    ```bash
-   atr checks list magpie "${VERSION}"     # GET /api/checks/list/...
+   atr revisions magpie "${VERSION}"                # list revisions; note the revision id
+   atr check status magpie "${VERSION}" --verbose   # poll checks
+   # review a specific revision's hard blockers and non-blocking concerns:
+   #   atr check blockers magpie "${VERSION}" <revision>
+   #   atr check concerns magpie "${VERSION}" <revision>
    ```
 
    Fix any failing check and re-upload a new revision before voting.
@@ -321,7 +329,17 @@ the binding votes.
 2. **Start the vote in ATR.** The RM triggers the vote for the
    composed candidate; ATR sends the `[VOTE]` email to
    `dev@magpie.apache.org` and opens the tabulation. Starting the
-   vote is an **RM action** — the agent drafts, the RM starts.
+   vote is an **RM action** — the agent drafts, the RM starts:
+
+   ```bash
+   # atr vote start PROJECT VERSION REVISION -m LIST [--duration H] [--subject S] [CONCERNS-NOTED]
+   # REVISION comes from `atr revisions magpie "${VERSION}"` (or the candidate page).
+   # If `atr check concerns` flagged non-blocking concerns, start the vote WITH the
+   # concerns-noted flag so they're acknowledged in the thread (see `atr vote start --help`).
+   atr vote start magpie "${VERSION}" <revision> \
+     -m dev@magpie.apache.org --duration "${VOTE_WINDOW_HOURS:-72}" \
+     --subject "[VOTE] Release Apache Magpie ${VERSION} from ${RC_TAG}"
+   ```
 3. **72-hour window** (Step 8). Minimum per
    [release-policy § release approval](https://www.apache.org/legal/release-policy.html#release-approval);
    the Magpie config may lengthen but not shorten it
