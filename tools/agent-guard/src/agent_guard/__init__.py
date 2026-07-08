@@ -581,6 +581,39 @@ def opencode_main() -> int:
     return ALLOW_EXIT
 
 
+def kiro_main() -> int:
+    """Harness-neutral entry point for Kiro CLI's ``preToolUse`` hook.
+
+    Reads Kiro's hook event on stdin — ``{"tool_name": "...", "tool_input":
+    {"command": "..."}, "cwd": "..."}`` — matches the shell tool
+    (``execute_bash`` / its ``shell`` alias / ``execute_cmd``), and runs the
+    **same** :func:`dispatch` core as every other harness. On a deny it writes
+    the reason to **stderr** (which Kiro returns to the model) and exits
+    ``DENY_EXIT`` (2 = block for ``PreToolUse``); on allow, a non-shell tool, or
+    any malformed input it exits ``ALLOW_EXIT`` — fail-open, exactly like the
+    Claude and OpenCode paths. Only this thin I/O shell differs; the guard
+    decisions are identical across harnesses.
+    """
+    try:
+        event = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        return ALLOW_EXIT
+    if not isinstance(event, dict):
+        return ALLOW_EXIT
+    if event.get("tool_name") not in ("execute_bash", "shell", "execute_cmd"):
+        return ALLOW_EXIT
+    tool_input = event.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return ALLOW_EXIT
+    command = str(tool_input.get("command", ""))
+    cwd = event.get("cwd")
+    reason = dispatch(command, cwd if isinstance(cwd, str) else None)
+    if reason:
+        sys.stderr.write(reason + "\n")
+        return DENY_EXIT
+    return ALLOW_EXIT
+
+
 def check_main(argv: list[str]) -> int:
     """Harness-neutral check-only entry point (``--check``).
 
@@ -698,6 +731,7 @@ def cli(argv: list[str] | None = None) -> int:
 
     No argument → the Claude Code ``PreToolUse`` hook (:func:`main`).
     ``--opencode`` → the OpenCode adapter (:func:`opencode_main`).
+    ``--kiro`` → the Kiro CLI adapter (:func:`kiro_main`).
     ``--check <cmd…>`` → harness-neutral check-only (:func:`check_main`).
     ``--exec <cmd…>`` → harness-neutral check-then-exec (:func:`exec_main`).
 
@@ -708,6 +742,8 @@ def cli(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     if args and args[0] == "--opencode":
         return opencode_main()
+    if args and args[0] == "--kiro":
+        return kiro_main()
     if args and args[0] == "--check":
         return check_main(args[1:])
     if args and args[0] == "--exec":

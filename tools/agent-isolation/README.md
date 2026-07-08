@@ -30,13 +30,16 @@ plain shell scripts plus a TOML manifest of pinned upstream
 versions.
 
 The clean-environment launcher [`agent-iso.sh`](agent-iso.sh) provides
-harness-agnostic env isolation. It exposes three entry points, all sharing
+harness-agnostic env isolation. It exposes four entry points, all sharing
 the same `env -i` credential-strip core:
 
 - **`claude-iso`** — launches Claude Code; additionally injects a one-shot
   `--settings` sandbox `allowRead` grant for the current repo (Claude-specific).
 - **`opencode-iso`** — launches OpenCode with the same clean env; no settings
   grant (OpenCode takes its filesystem isolation from the OS-level sandbox).
+- **`kiro-iso`** — launches Kiro CLI (the `kiro` name normalises to its
+  `kiro-cli` binary) with the same clean env; like OpenCode, it takes its
+  filesystem isolation from the OS-level sandbox (no `--settings` grant).
 - **`agent-iso <cli>`** — launches *any* agentic CLI (`codex`, `cursor`,
   `gemini`, `aider`, …) with the same credential strip. The `--settings`
   injection is skipped for non-Claude CLIs, which take their filesystem

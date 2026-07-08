@@ -80,6 +80,10 @@
 # `claude-iso` / `opencode-iso` entry points are thin wrappers over this.
 agent_iso_run() {
   local agent="$1"
+  # The Kiro harness is invoked as `kiro` but ships the `kiro-cli` binary;
+  # normalise so both `AGENT_ISO_AGENT=kiro` and the `kiro-iso` entry point
+  # resolve the real executable. (Claude/OpenCode names match their binaries.)
+  [[ "$agent" == "kiro" ]] && agent="kiro-cli"
   shift
 
   # Resolve the agent binary on PATH before clobbering the env so
@@ -309,6 +313,7 @@ claude_iso_main() { agent_iso_run "${AGENT_ISO_AGENT:-claude}" "$@"; }
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
   claude-iso()   { agent_iso_run claude "$@"; }
   opencode-iso() { agent_iso_run opencode "$@"; }
+  kiro-iso()     { agent_iso_run kiro "$@"; }
   # Harness-agnostic entry point: agent-iso <cli> [cli-args]
   # Guard the no-CLI case so it matches the direct-exec path (usage + exit 1)
   # instead of falling through to agent_iso_run with an empty agent name.
@@ -323,6 +328,7 @@ else
   _aig_basename="$(basename "${0}")"
   case "$_aig_basename" in
     opencode-iso*) agent_iso_run opencode "$@" ;;
+    kiro-iso*)     agent_iso_run kiro "$@" ;;
     # Symlink named exactly `agent-iso` (no .sh extension) → first positional
     # arg is the harness CLI name.
     agent-iso)
