@@ -33,6 +33,7 @@ from magpie_bitbucket.normalize import (
     pull_request_diff,
     pull_request_discussion,
     pull_request_list,
+    pull_request_merge_checks,
     pull_request_reviews,
     pull_request_status,
     repository,
@@ -1624,3 +1625,244 @@ def test_datacenter_discussion_stops_on_non_advancing_next_page_start(
 
     assert opener.open.call_count == 1
     assert result["values"][0]["id"] == 201
+
+
+def test_cloud_get_pull_request_merge_checks_composes_status_and_reviews(cloud_env: None) -> None:
+    with (
+        patch("magpie_bitbucket.cloud.get_pull_request_status") as get_status,
+        patch("magpie_bitbucket.cloud.get_pull_request_reviews") as get_reviews,
+    ):
+        get_status.return_value = {
+            "pull_request_id": "7",
+            "pull_request": {"id": 7, "state": "OPEN"},
+            "values": [],
+        }
+        get_reviews.return_value = {
+            "pull_request_id": "7",
+            "pull_request": {"id": 7, "state": "OPEN"},
+            "values": [],
+        }
+
+        result = cloud.get_pull_request_merge_checks(load_config(), "7")
+
+    get_status.assert_called_once()
+    get_reviews.assert_called_once()
+    assert result["pull_request_id"] == "7"
+    assert result["pull_request"]["id"] == 7
+
+
+def test_datacenter_get_pull_request_merge_checks_composes_status_and_reviews(
+    datacenter_env: None,
+) -> None:
+    with (
+        patch("magpie_bitbucket.datacenter.get_pull_request_merge_status") as get_merge,
+        patch("magpie_bitbucket.datacenter.get_pull_request_status") as get_status,
+        patch("magpie_bitbucket.datacenter.get_pull_request_reviews") as get_reviews,
+    ):
+        get_merge.return_value = {"canMerge": True, "conflicted": False, "vetoes": []}
+        get_status.return_value = {
+            "pull_request_id": "9",
+            "pull_request": {"id": 9, "state": "OPEN"},
+            "values": [],
+        }
+        get_reviews.return_value = {
+            "pull_request_id": "9",
+            "pull_request": {"id": 9, "state": "OPEN"},
+            "values": [],
+        }
+
+        result = datacenter.get_pull_request_merge_checks(load_config(), "9")
+
+    get_merge.assert_called_once()
+    get_status.assert_called_once()
+    get_reviews.assert_called_once()
+    assert result["pull_request_id"] == "9"
+    assert result["pull_request"]["id"] == 9
+    assert result["merge"]["canMerge"] is True
+
+
+def test_normalize_pull_request_merge_checks_blocks_on_known_signals() -> None:
+    normalized = pull_request_merge_checks(
+        "cloud",
+        {
+            "pull_request_id": "7",
+            "pull_request": {
+                "state": "OPEN",
+                "mergeable": False,
+                "conflicted": True,
+            },
+            "status": {
+                "pull_request_id": "7",
+                "pull_request": {"state": "OPEN"},
+                "values": [{"state": "FAILED"}],
+            },
+            "reviews": {
+                "pull_request_id": "7",
+                "pull_request": {},
+                "values": [
+                    {
+                        "changes_requested": {
+                            "user": {"display_name": "Reviewer One"},
+                            "date": "2026-07-01T00:00:00+00:00",
+                        }
+                    }
+                ],
+            },
+        },
+    )
+
+    assert normalized["backend"] == "bitbucket-cloud"
+    assert normalized["merge_check_state"] == "blocked"
+    assert normalized["has_known_blockers"] is True
+    assert normalized["mergeable"] == "conflicting"
+    assert normalized["can_merge"] is False
+    assert normalized["conflicted"] is True
+    assert normalized["checks"] == "failing"
+    assert normalized["review_decision"] == "changes_requested"
+    assert {blocker["kind"] for blocker in normalized["blockers"]} == {
+        "mergeability",
+        "merge_conflict",
+        "status_checks",
+        "reviews",
+    }
+
+
+def test_normalize_pull_request_merge_checks_unknown_without_backend_signal() -> None:
+    normalized = pull_request_merge_checks(
+        "datacenter",
+        {
+            "pull_request_id": "9",
+            "pull_request": {"state": "OPEN"},
+            "status": {"pull_request_id": "9", "values": []},
+            "reviews": {"pull_request_id": "9", "pull_request": {}, "values": []},
+        },
+    )
+
+    assert normalized["backend"] == "bitbucket-datacenter"
+    assert normalized["merge_check_state"] == "unknown"
+    assert normalized["has_known_blockers"] is False
+    assert normalized["mergeable"] == "unknown"
+    assert normalized["can_merge"] is None
+    assert normalized["conflicted"] is None
+    assert normalized["blockers"] == []
+
+
+def test_cli_pr_merge_checks_cloud(cloud_env: None, capsys: pytest.CaptureFixture[str]) -> None:
+    with patch(
+        "magpie_bitbucket.cloud.get_pull_request_merge_checks",
+        return_value={
+            "pull_request_id": "7",
+            "pull_request": {"state": "OPEN", "mergeable": False},
+            "status": {"pull_request_id": "7", "values": [{"state": "FAILED"}]},
+            "reviews": {"pull_request_id": "7", "pull_request": {}, "values": []},
+        },
+    ) as get_merge_checks:
+        assert main(["pr", "merge-checks", "7"]) == 0
+
+    get_merge_checks.assert_called_once()
+    output = json.loads(capsys.readouterr().out)
+    assert output["backend"] == "bitbucket-cloud"
+    assert output["merge_check_state"] == "blocked"
+    assert output["has_known_blockers"] is True
+
+
+@patch("urllib.request.build_opener")
+def test_datacenter_get_pull_request_merge_status_url(
+    mock_build_opener: MagicMock, datacenter_env: None
+) -> None:
+    opener = mock_opener(
+        mock_build_opener,
+        {"canMerge": False, "conflicted": True, "vetoes": []},
+    )
+
+    result = datacenter.get_pull_request_merge_status(load_config(), "9")
+
+    request = opener.open.call_args.args[0]
+    assert request.full_url == (
+        "https://bitbucket.example.test/rest/api/1.0/projects/MAGPIE/repos/magpie/pull-requests/9/merge"
+    )
+    assert request.get_method() == "GET"
+    assert result["canMerge"] is False
+
+
+def test_datacenter_get_pull_request_merge_checks_includes_merge_status(
+    datacenter_env: None,
+) -> None:
+    with (
+        patch("magpie_bitbucket.datacenter.get_pull_request_merge_status") as get_merge,
+        patch("magpie_bitbucket.datacenter.get_pull_request_status") as get_status,
+        patch("magpie_bitbucket.datacenter.get_pull_request_reviews") as get_reviews,
+    ):
+        get_merge.return_value = {
+            "canMerge": False,
+            "conflicted": True,
+            "vetoes": [{"summaryMessage": "Needs one more approval"}],
+        }
+        get_status.return_value = {
+            "pull_request_id": "9",
+            "pull_request": {"id": 9, "state": "OPEN"},
+            "values": [],
+        }
+        get_reviews.return_value = {
+            "pull_request_id": "9",
+            "pull_request": {"id": 9, "state": "OPEN"},
+            "values": [],
+        }
+
+        result = datacenter.get_pull_request_merge_checks(load_config(), "9")
+
+    get_merge.assert_called_once()
+    get_status.assert_called_once()
+    get_reviews.assert_called_once()
+    assert result["merge"]["canMerge"] is False
+    assert result["merge"]["conflicted"] is True
+
+
+def test_normalize_pull_request_merge_checks_datacenter_vetoes() -> None:
+    normalized = pull_request_merge_checks(
+        "datacenter",
+        {
+            "pull_request_id": "9",
+            "pull_request": {"state": "OPEN"},
+            "merge": {
+                "canMerge": False,
+                "conflicted": False,
+                "outcome": "VETOED",
+                "vetoes": [
+                    {
+                        "summaryMessage": "Needs one more approval",
+                        "detailedMessage": "Project policy requires another reviewer.",
+                    }
+                ],
+            },
+            "status": {"pull_request_id": "9", "values": []},
+            "reviews": {"pull_request_id": "9", "pull_request": {}, "values": []},
+        },
+    )
+
+    assert normalized["merge_check_state"] == "blocked"
+    assert normalized["has_known_blockers"] is True
+    assert normalized["mergeable"] == "unknown"
+    assert normalized["can_merge"] is False
+    assert normalized["conflicted"] is False
+    assert any(blocker["kind"] == "merge_veto" for blocker in normalized["blockers"])
+
+
+def test_cli_pr_merge_checks_datacenter(datacenter_env: None, capsys: pytest.CaptureFixture[str]) -> None:
+    with patch(
+        "magpie_bitbucket.datacenter.get_pull_request_merge_checks",
+        return_value={
+            "pull_request_id": "9",
+            "pull_request": {"state": "OPEN"},
+            "merge": {"canMerge": True, "conflicted": False, "vetoes": []},
+            "status": {"pull_request_id": "9", "values": []},
+            "reviews": {"pull_request_id": "9", "pull_request": {}, "values": []},
+        },
+    ) as get_merge_checks:
+        assert main(["pr", "merge-checks", "9"]) == 0
+
+    get_merge_checks.assert_called_once()
+    output = json.loads(capsys.readouterr().out)
+    assert output["backend"] == "bitbucket-datacenter"
+    assert output["merge_check_state"] == "passing"
+    assert output["mergeable"] == "clean"
