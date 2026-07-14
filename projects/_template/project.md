@@ -44,7 +44,15 @@ reads the project name from `<project-config>/project.md` and then loads this ma
 repositories, mailing lists, and references to the other files in
 this directory.
 
-**Note on Auto-sourcing:** Stable fields in this manifest (specifically under Identity, Repositories, and Mailing lists) can be automatically derived from `.asf.yaml` and repository metadata via `gh repo view` during `/magpie-setup adopt` or `/magpie-setup upgrade`. Hand-editing is only required when these sources are absent, incomplete, or if you wish to override the derived values.
+**Note on Auto-sourcing:** Stable fields under Identity and Repositories
+(`upstream_repo`, `upstream_default_branch`, `product_family_url`, labels)
+can be automatically derived from GitHub repository metadata via
+`gh repo view` during `/magpie-setup adopt` or `/magpie-setup upgrade`, for
+any adopter. The **Mailing lists** are auto-sourced **only for
+`organization: ASF`** projects (from `.asf.yaml`, with `*.apache.org`
+defaults); a non-ASF `organization` fills them in by hand. Hand-editing is
+only required when a source is absent, incomplete, or you wish to override
+a derived value.
 
 Grep for `TODO` to see every field you still need to fill in:
 
@@ -84,7 +92,9 @@ produces.
 
 ## Mailing lists
 
-*(Auto-sourced from `.asf.yaml` `notifications:` block if present)*
+*(For `organization: ASF` projects only: auto-sourced from the `.asf.yaml`
+`notifications:` block if present, else `*.apache.org` defaults. A non-ASF
+`organization` has no `.asf.yaml` — fill these in by hand.)*
 
 | Key | Value | Notes |
 |---|---|---|

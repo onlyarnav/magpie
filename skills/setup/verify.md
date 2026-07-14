@@ -679,11 +679,16 @@ latest `main` of `apache/comdev` (tracked, not pinned). Confirm:
 
 ### 8f. Auto-sourced config fields drift check
 
-Verify that the auto-sourced stable configuration fields (`upstream_repo`, `upstream_default_branch`, `product_family_url`, mailing lists, labels) in `.apache-magpie-overrides/project.md` are in sync with the current `.asf.yaml` file (if present) and the repository's live metadata.
+Verify that the auto-sourced stable configuration fields in
+`.apache-magpie-overrides/project.md` are in sync with the repository's live
+metadata:
 
-- Query `gh repo view` and parse `.asf.yaml` to derive the current metadata.
-- Compare these derived values with the committed values in `.apache-magpie-overrides/project.md`.
-- ⚠ if any value has changed or drifted (e.g. the default branch changed from `master` to `main`, or mailing list routing in `.asf.yaml` was updated). Recommend running `/magpie-setup upgrade` to re-derive and align the committed configuration with the new metadata.
+- Always (organization-agnostic): `upstream_repo`, `upstream_default_branch`,
+  `product_family_url`, `labels` — from `gh repo view`.
+- **Only when `organization: ASF`**: the mailing lists, against the current
+  `.asf.yaml`. Skip the `.asf.yaml` comparison for a non-ASF `organization`
+  (an `independent` project has no `.asf.yaml` to drift against — not a finding).
+- ⚠ if any value has changed or drifted (e.g. the default branch changed from `master` to `main`, or — for ASF projects — mailing-list routing in `.asf.yaml` was updated). Recommend running `/magpie-setup upgrade` to re-derive and align the committed configuration with the new metadata.
 
 ### 9. Project documentation mentions the framework
 
